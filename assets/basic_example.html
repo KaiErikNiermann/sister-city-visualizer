@@ -1,0 +1,444 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script>function neighbourhoodHighlight(params) {
+  // console.log("in nieghbourhoodhighlight");
+  allNodes = nodes.get({ returnType: "Object" });
+  // originalNodes = JSON.parse(JSON.stringify(allNodes));
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    highlightActive = true;
+    var i, j;
+    var selectedNode = params.nodes[0];
+    var degrees = 2;
+
+    // mark all nodes as hard to read.
+    for (let nodeId in allNodes) {
+      // nodeColors[nodeId] = allNodes[nodeId].color;
+      allNodes[nodeId].color = "rgba(200,200,200,0.5)";
+      if (allNodes[nodeId].hiddenLabel === undefined) {
+        allNodes[nodeId].hiddenLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+    var connectedNodes = network.getConnectedNodes(selectedNode);
+    var allConnectedNodes = [];
+
+    // get the second degree nodes
+    for (i = 1; i < degrees; i++) {
+      for (j = 0; j < connectedNodes.length; j++) {
+        allConnectedNodes = allConnectedNodes.concat(
+          network.getConnectedNodes(connectedNodes[j])
+        );
+      }
+    }
+
+    // all second degree nodes get a different color and their label back
+    for (i = 0; i < allConnectedNodes.length; i++) {
+      // allNodes[allConnectedNodes[i]].color = "pink";
+      allNodes[allConnectedNodes[i]].color = "rgba(150,150,150,0.75)";
+      if (allNodes[allConnectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[allConnectedNodes[i]].label =
+          allNodes[allConnectedNodes[i]].hiddenLabel;
+        allNodes[allConnectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // all first degree nodes get their own color and their label back
+    for (i = 0; i < connectedNodes.length; i++) {
+      // allNodes[connectedNodes[i]].color = undefined;
+      allNodes[connectedNodes[i]].color = nodeColors[connectedNodes[i]];
+      if (allNodes[connectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[connectedNodes[i]].label =
+          allNodes[connectedNodes[i]].hiddenLabel;
+        allNodes[connectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // the main node gets its own color and its label back.
+    // allNodes[selectedNode].color = undefined;
+    allNodes[selectedNode].color = nodeColors[selectedNode];
+    if (allNodes[selectedNode].hiddenLabel !== undefined) {
+      allNodes[selectedNode].label = allNodes[selectedNode].hiddenLabel;
+      allNodes[selectedNode].hiddenLabel = undefined;
+    }
+  } else if (highlightActive === true) {
+    // console.log("highlightActive was true");
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      // allNodes[nodeId].color = "purple";
+      allNodes[nodeId].color = nodeColors[nodeId];
+      // delete allNodes[nodeId].color;
+      if (allNodes[nodeId].hiddenLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].hiddenLabel;
+        allNodes[nodeId].hiddenLabel = undefined;
+      }
+    }
+    highlightActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    // console.log("Nothing was selected");
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        // allNodes[nodeId].color = {};
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function filterHighlight(params) {
+  allNodes = nodes.get({ returnType: "Object" });
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    filterActive = true;
+    let selectedNodes = params.nodes;
+
+    // hiding all nodes and saving the label
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = true;
+      if (allNodes[nodeId].savedLabel === undefined) {
+        allNodes[nodeId].savedLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+
+    for (let i=0; i < selectedNodes.length; i++) {
+      allNodes[selectedNodes[i]].hidden = false;
+      if (allNodes[selectedNodes[i]].savedLabel !== undefined) {
+        allNodes[selectedNodes[i]].label = allNodes[selectedNodes[i]].savedLabel;
+        allNodes[selectedNodes[i]].savedLabel = undefined;
+      }
+    }
+
+  } else if (filterActive === true) {
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = false;
+      if (allNodes[nodeId].savedLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].savedLabel;
+        allNodes[nodeId].savedLabel = undefined;
+      }
+    }
+    filterActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function selectNode(nodes) {
+  network.selectNodes(nodes);
+  neighbourhoodHighlight({ nodes: nodes });
+  return nodes;
+}
+
+function selectNodes(nodes) {
+  network.selectNodes(nodes);
+  filterHighlight({nodes: nodes});
+  return nodes;
+}
+
+function highlightFilter(filter) {
+  let selectedNodes = []
+  let selectedProp = filter['property']
+  if (filter['item'] === 'node') {
+    let allNodes = nodes.get({ returnType: "Object" });
+    for (let nodeId in allNodes) {
+      if (allNodes[nodeId][selectedProp] && filter['value'].includes((allNodes[nodeId][selectedProp]).toString())) {
+        selectedNodes.push(nodeId)
+      }
+    }
+  }
+  else if (filter['item'] === 'edge'){
+    let allEdges = edges.get({returnType: 'object'});
+    // check if the selected property exists for selected edge and select the nodes connected to the edge
+    for (let edge in allEdges) {
+      if (allEdges[edge][selectedProp] && filter['value'].includes((allEdges[edge][selectedProp]).toString())) {
+        selectedNodes.push(allEdges[edge]['from'])
+        selectedNodes.push(allEdges[edge]['to'])
+      }
+    }
+  }
+  selectNodes(selectedNodes)
+}</script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+            
+            
+            
+            
+            
+
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 1000px;
+                 height: 1000px;
+                 background-color: #222222;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+             #loadingBar {
+                 position:absolute;
+                 top:0px;
+                 left:0px;
+                 width: 1000px;
+                 height: 1000px;
+                 background-color:rgba(200,200,200,0.8);
+                 -webkit-transition: all 0.5s ease;
+                 -moz-transition: all 0.5s ease;
+                 -ms-transition: all 0.5s ease;
+                 -o-transition: all 0.5s ease;
+                 transition: all 0.5s ease;
+                 opacity:1;
+             }
+
+             #bar {
+                 position:absolute;
+                 top:0px;
+                 left:0px;
+                 width:20px;
+                 height:20px;
+                 margin:auto auto auto auto;
+                 border-radius:11px;
+                 border:2px solid rgba(30,30,30,0.05);
+                 background: rgb(0, 173, 246); /* Old browsers */
+                 box-shadow: 2px 0px 4px rgba(0,0,0,0.4);
+             }
+
+             #border {
+                 position:absolute;
+                 top:10px;
+                 left:10px;
+                 width:500px;
+                 height:23px;
+                 margin:auto auto auto auto;
+                 box-shadow: 0px 0px 4px rgba(0,0,0,0.2);
+                 border-radius:10px;
+             }
+
+             #text {
+                 position:absolute;
+                 top:8px;
+                 left:530px;
+                 width:30px;
+                 height:50px;
+                 margin:auto auto auto auto;
+                 font-size:22px;
+                 color: #000000;
+             }
+
+             div.outerBorder {
+                 position:relative;
+                 top:400px;
+                 width:600px;
+                 height:44px;
+                 margin:auto auto auto auto;
+                 border:8px solid rgba(0,0,0,0.1);
+                 background: rgb(252,252,252); /* Old browsers */
+                 background: -moz-linear-gradient(top,  rgba(252,252,252,1) 0%, rgba(237,237,237,1) 100%); /* FF3.6+ */
+                 background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(252,252,252,1)), color-stop(100%,rgba(237,237,237,1))); /* Chrome,Safari4+ */
+                 background: -webkit-linear-gradient(top,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* Chrome10+,Safari5.1+ */
+                 background: -o-linear-gradient(top,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* Opera 11.10+ */
+                 background: -ms-linear-gradient(top,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* IE10+ */
+                 background: linear-gradient(to bottom,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* W3C */
+                 filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fcfcfc', endColorstr='#ededed',GradientType=0 ); /* IE6-9 */
+                 border-radius:72px;
+                 box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
+             }
+             
+
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+            <div id="loadingBar">
+              <div class="outerBorder">
+                <div id="text">0%</div>
+                <div id="border">
+                  <div id="bar"></div>
+                </div>
+              </div>
+            </div>
+        
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"color": "#97c2fc", "font": {"color": "white"}, "id": "Balkh", "label": "Balkh", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Bukhara", "label": "Bukhara", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Bamyan", "label": "Bamyan", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Gering, Nebraska", "label": "Gering, Nebraska", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Ghazni", "label": "Ghazni", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Hayward, California", "label": "Hayward, California", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Kabul", "label": "Kabul", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Dushanbe", "label": "Dushanbe", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Istanbul", "label": "Istanbul", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Kazan", "label": "Kazan", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Saskatoon", "label": "Saskatoon", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Durr\u00ebs", "label": "Durr\u00ebs", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Constantine", "label": "Constantine", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Paghman", "label": "Paghman", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Alice Springs", "label": "Alice Springs", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Berat", "label": "Berat", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Lovech", "label": "Lovech", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Ploie\u0219ti", "label": "Ploie\u0219ti", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Bari", "label": "Bari", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Pristina", "label": "Pristina", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Prizren", "label": "Prizren", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Thessaloniki", "label": "Thessaloniki", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Ulcinj", "label": "Ulcinj", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Tirana", "label": "Tirana", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Shkod\u00ebr", "label": "Shkod\u00ebr", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Vlor\u00eb", "label": "Vlor\u00eb", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Kor\u00e7\u00eb", "label": "Kor\u00e7\u00eb", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Fier", "label": "Fier", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Cleveland", "label": "Cleveland", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Kam\u00ebz", "label": "Kam\u00ebz", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Jena", "label": "Jena", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Kemalpa\u015fa", "label": "Kemalpa\u015fa", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Macerata", "label": "Macerata", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Yonkers, New York", "label": "Yonkers, New York", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Bitola", "label": "Bitola", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Cluj-Napoca", "label": "Cluj-Napoca", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Kosovska Mitrovica", "label": "Kosovska Mitrovica", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Los Alc\u00e1zares", "label": "Los Alc\u00e1zares", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Verona", "label": "Verona", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Lushnj\u00eb", "label": "Lushnj\u00eb", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Brindisi", "label": "Brindisi", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Sarand\u00eb", "label": "Sarand\u00eb", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Corfu", "label": "Corfu", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Cetinje", "label": "Cetinje", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "\u0110akovica", "label": "\u0110akovica", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Podgorica", "label": "Podgorica", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Ankara", "label": "Ankara", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Athens", "label": "Athens", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Barcelona", "label": "Barcelona", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Beijing", "label": "Beijing", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Brussels", "label": "Brussels", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Bucharest", "label": "Bucharest", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Bursa", "label": "Bursa", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Cobourg", "label": "Cobourg", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Doha", "label": "Doha", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Florence", "label": "Florence", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Genoa", "label": "Genoa", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Grand Rapids, Michigan", "label": "Grand Rapids, Michigan", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Kiev", "label": "Kiev", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Madrid", "label": "Madrid", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Marseille", "label": "Marseille", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Moscow", "label": "Moscow", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Ohrid", "label": "Ohrid", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Paris", "label": "Paris", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Prague", "label": "Prague", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Rome", "label": "Rome", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Sarajevo", "label": "Sarajevo", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Seoul", "label": "Seoul", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Sofia", "label": "Sofia", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Stockholm", "label": "Stockholm", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Turin", "label": "Turin", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Vilnius", "label": "Vilnius", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Zagreb", "label": "Zagreb", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Zaragoza", "label": "Zaragoza", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Algiers", "label": "Algiers", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Hollywood, Florida", "label": "Hollywood, Florida", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "\u0130zmir", "label": "\u0130zmir", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Monopoli", "label": "Monopoli", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Amman", "label": "Amman", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Amsterdam", "label": "Amsterdam", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Berlin", "label": "Berlin", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Bordeaux", "label": "Bordeaux", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Cairo", "label": "Cairo", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Casablanca", "label": "Casablanca", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "City of London", "label": "City of London", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Dakar", "label": "Dakar", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Dubai", "label": "Dubai", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "El Aai\u00fan", "label": "El Aai\u00fan", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Geneva", "label": "Geneva", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "London", "label": "London", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Montreal", "label": "Montreal", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Santiago", "label": "Santiago", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "S\u00e3o Paulo", "label": "S\u00e3o Paulo", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Shanghai", "label": "Shanghai", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Surakarta", "label": "Surakarta", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Tripoli", "label": "Tripoli", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Tunis", "label": "Tunis", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Tyre, Lebanon", "label": "Tyre, Lebanon", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Oran", "label": "Oran", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "B\u00e9ja\u00efa", "label": "B\u00e9ja\u00efa", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Bad Homburg vor der H\u00f6he", "label": "Bad Homburg vor der H\u00f6he", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Brest, France", "label": "Brest, France", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Grenoble", "label": "Grenoble", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Sousse", "label": "Sousse", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Mascara", "label": "Mascara", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Elkader, Iowa", "label": "Elkader, Iowa", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Tifariti", "label": "Tifariti", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Durban", "label": "Durban", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Elche", "label": "Elche", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Gda\u0144sk", "label": "Gda\u0144sk", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Havana", "label": "Havana", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Oujda", "label": "Oujda", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Sfax", "label": "Sfax", "shape": "dot", "size": 10}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Zarqa", "label": "Zarqa", "shape": "dot", "size": 10}]);
+                  edges = new vis.DataSet([{"from": "Balkh", "to": "Bukhara", "width": 1}, {"from": "Bamyan", "to": "Gering, Nebraska", "width": 1}, {"from": "Ghazni", "to": "Hayward, California", "width": 1}, {"from": "Kabul", "to": "Dushanbe", "width": 1}, {"from": "Kabul", "to": "Istanbul", "width": 1}, {"from": "Kabul", "to": "Kazan", "width": 1}, {"from": "Kabul", "to": "Saskatoon", "width": 1}, {"from": "Istanbul", "to": "Durr\u00ebs", "width": 1}, {"from": "Istanbul", "to": "Constantine", "width": 1}, {"from": "Paghman", "to": "Alice Springs", "width": 1}, {"from": "Berat", "to": "Lovech", "width": 1}, {"from": "Berat", "to": "Ploie\u0219ti", "width": 1}, {"from": "Durr\u00ebs", "to": "Bari", "width": 1}, {"from": "Durr\u00ebs", "to": "Pristina", "width": 1}, {"from": "Durr\u00ebs", "to": "Prizren", "width": 1}, {"from": "Durr\u00ebs", "to": "Thessaloniki", "width": 1}, {"from": "Durr\u00ebs", "to": "Ulcinj", "width": 1}, {"from": "Pristina", "to": "Tirana", "width": 1}, {"from": "Prizren", "to": "Shkod\u00ebr", "width": 1}, {"from": "Prizren", "to": "Tirana", "width": 1}, {"from": "Prizren", "to": "Vlor\u00eb", "width": 1}, {"from": "Thessaloniki", "to": "Kor\u00e7\u00eb", "width": 1}, {"from": "Ulcinj", "to": "Shkod\u00ebr", "width": 1}, {"from": "Ulcinj", "to": "Tirana", "width": 1}, {"from": "Fier", "to": "Cleveland", "width": 1}, {"from": "Kam\u00ebz", "to": "Jena", "width": 1}, {"from": "Kam\u00ebz", "to": "Kemalpa\u015fa", "width": 1}, {"from": "Kam\u00ebz", "to": "Macerata", "width": 1}, {"from": "Kam\u00ebz", "to": "Yonkers, New York", "width": 1}, {"from": "Kor\u00e7\u00eb", "to": "Bitola", "width": 1}, {"from": "Kor\u00e7\u00eb", "to": "Cluj-Napoca", "width": 1}, {"from": "Kor\u00e7\u00eb", "to": "Kosovska Mitrovica", "width": 1}, {"from": "Kor\u00e7\u00eb", "to": "Los Alc\u00e1zares", "width": 1}, {"from": "Kor\u00e7\u00eb", "to": "Verona", "width": 1}, {"from": "Lushnj\u00eb", "to": "Brindisi", "width": 1}, {"from": "Sarand\u00eb", "to": "Corfu", "width": 1}, {"from": "Shkod\u00ebr", "to": "Cetinje", "width": 1}, {"from": "Shkod\u00ebr", "to": "\u0110akovica", "width": 1}, {"from": "Shkod\u00ebr", "to": "Podgorica", "width": 1}, {"from": "Podgorica", "to": "Tirana", "width": 1}, {"from": "Tirana", "to": "Ankara", "width": 1}, {"from": "Tirana", "to": "Athens", "width": 1}, {"from": "Tirana", "to": "Barcelona", "width": 1}, {"from": "Tirana", "to": "Beijing", "width": 1}, {"from": "Tirana", "to": "Brussels", "width": 1}, {"from": "Tirana", "to": "Bucharest", "width": 1}, {"from": "Tirana", "to": "Bursa", "width": 1}, {"from": "Tirana", "to": "Cobourg", "width": 1}, {"from": "Tirana", "to": "Doha", "width": 1}, {"from": "Tirana", "to": "Florence", "width": 1}, {"from": "Tirana", "to": "Genoa", "width": 1}, {"from": "Tirana", "to": "Grand Rapids, Michigan", "width": 1}, {"from": "Tirana", "to": "Kiev", "width": 1}, {"from": "Tirana", "to": "Madrid", "width": 1}, {"from": "Tirana", "to": "Marseille", "width": 1}, {"from": "Tirana", "to": "Moscow", "width": 1}, {"from": "Tirana", "to": "Ohrid", "width": 1}, {"from": "Tirana", "to": "Paris", "width": 1}, {"from": "Tirana", "to": "Prague", "width": 1}, {"from": "Tirana", "to": "Rome", "width": 1}, {"from": "Tirana", "to": "Sarajevo", "width": 1}, {"from": "Tirana", "to": "Seoul", "width": 1}, {"from": "Tirana", "to": "Sofia", "width": 1}, {"from": "Tirana", "to": "Stockholm", "width": 1}, {"from": "Tirana", "to": "Turin", "width": 1}, {"from": "Tirana", "to": "Vilnius", "width": 1}, {"from": "Tirana", "to": "Zagreb", "width": 1}, {"from": "Tirana", "to": "Zaragoza", "width": 1}, {"from": "Barcelona", "to": "Algiers", "width": 1}, {"from": "Beijing", "to": "Algiers", "width": 1}, {"from": "Moscow", "to": "Algiers", "width": 1}, {"from": "Paris", "to": "Algiers", "width": 1}, {"from": "Rome", "to": "Algiers", "width": 1}, {"from": "Sofia", "to": "Algiers", "width": 1}, {"from": "Vlor\u00eb", "to": "Hollywood, Florida", "width": 1}, {"from": "Vlor\u00eb", "to": "\u0130zmir", "width": 1}, {"from": "Vlor\u00eb", "to": "Monopoli", "width": 1}, {"from": "\u0130zmir", "to": "Algiers", "width": 1}, {"from": "Algiers", "to": "Amman", "width": 1}, {"from": "Algiers", "to": "Amsterdam", "width": 1}, {"from": "Algiers", "to": "Berlin", "width": 1}, {"from": "Algiers", "to": "Bordeaux", "width": 1}, {"from": "Algiers", "to": "Cairo", "width": 1}, {"from": "Algiers", "to": "Casablanca", "width": 1}, {"from": "Algiers", "to": "City of London", "width": 1}, {"from": "Algiers", "to": "Dakar", "width": 1}, {"from": "Algiers", "to": "Dubai", "width": 1}, {"from": "Algiers", "to": "El Aai\u00fan", "width": 1}, {"from": "Algiers", "to": "Geneva", "width": 1}, {"from": "Algiers", "to": "London", "width": 1}, {"from": "Algiers", "to": "Montreal", "width": 1}, {"from": "Algiers", "to": "Santiago", "width": 1}, {"from": "Algiers", "to": "S\u00e3o Paulo", "width": 1}, {"from": "Algiers", "to": "Shanghai", "width": 1}, {"from": "Algiers", "to": "Surakarta", "width": 1}, {"from": "Algiers", "to": "Tripoli", "width": 1}, {"from": "Algiers", "to": "Tunis", "width": 1}, {"from": "Algiers", "to": "Tyre, Lebanon", "width": 1}, {"from": "Bordeaux", "to": "Oran", "width": 1}, {"from": "Dakar", "to": "Oran", "width": 1}, {"from": "B\u00e9ja\u00efa", "to": "Bad Homburg vor der H\u00f6he", "width": 1}, {"from": "B\u00e9ja\u00efa", "to": "Brest, France", "width": 1}, {"from": "Constantine", "to": "Grenoble", "width": 1}, {"from": "Constantine", "to": "Sousse", "width": 1}, {"from": "Mascara", "to": "Elkader, Iowa", "width": 1}, {"from": "Mascara", "to": "Tifariti", "width": 1}, {"from": "Oran", "to": "Durban", "width": 1}, {"from": "Oran", "to": "Elche", "width": 1}, {"from": "Oran", "to": "Gda\u0144sk", "width": 1}, {"from": "Oran", "to": "Havana", "width": 1}, {"from": "Oran", "to": "Oujda", "width": 1}, {"from": "Oran", "to": "Sfax", "width": 1}, {"from": "Oran", "to": "Zarqa", "width": 1}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {
+    "configure": {
+        "enabled": false
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": true,
+            "type": "dynamic"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "enabled": true,
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+
+                  
+
+
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+                      network.on("stabilizationProgress", function(params) {
+                          document.getElementById('loadingBar').removeAttribute("style");
+                          var maxWidth = 496;
+                          var minWidth = 20;
+                          var widthFactor = params.iterations/params.total;
+                          var width = Math.max(minWidth,maxWidth * widthFactor);
+                          document.getElementById('bar').style.width = width + 'px';
+                          document.getElementById('text').innerHTML = Math.round(widthFactor*100) + '%';
+                      });
+                      network.once("stabilizationIterationsDone", function() {
+                          document.getElementById('text').innerHTML = '100%';
+                          document.getElementById('bar').style.width = '496px';
+                          document.getElementById('loadingBar').style.opacity = 0;
+                          // really clean the dom element
+                          setTimeout(function () {document.getElementById('loadingBar').style.display = 'none';}, 500);
+                      });
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    </body>
+</html>
