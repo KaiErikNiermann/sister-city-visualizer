@@ -4,7 +4,7 @@
 
 ## Description 
 
-This project is a look into visualizing the sister-cities of the world using networkx and pyvis and trying to see if we can gain an interesting insights. I built this mainly because I always found the topic rather interesting but felt there were somewhat insufficient resources when it came to actually visualizing everything. I got some insipiration from [a paper](https://www.researchgate.net/publication/235356930_Not_All_Paths_Lead_to_Rome_Analysing_the_Network_of_Sister_Cities) which analized some of the properties of the sister city graph, but felt like a modern touch would be interesting.
+This project is a look into visualizing the sister-cities of the world using networkx and pyvis and trying to see if we can gain an interesting insights. I built this mainly because I always found the topic rather interesting but felt there were somewhat insufficient resources when it came to actually visualizing everything. I got some insipiration from [a paper](https://www.researchgate.net/publication/235356930_Not_All_Paths_Lead_to_Rome_Analysing_the_Network_of_Sister_Cities) which analized some of the properties of the sister city graph, but felt like a modern touch would be nice.
 
 ## Installation 
 
