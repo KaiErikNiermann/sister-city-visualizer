@@ -17,8 +17,11 @@ git clone https://github.com/KaiErikNiermann/sister-city-visualizer.git
 
 2. Install the required packages
 ```
-pip install -r requirements.txt
+make install
 ```
 
 Then you should be able to open the jupyter notebook and run some of the codecells to see what happens. 
 
+## Notes 
+
+If you want to expand on this project then I included `make freeze` to save any new deps just for some minor added convenience.
