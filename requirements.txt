@@ -12,10 +12,13 @@ basemap-data==1.3.2
 basemap-data-hires==1.3.2
 beautifulsoup4==4.12.2
 bleach==6.0.0
+blinker==1.6.2
 certifi==2023.5.7
 cffi==1.15.1
 charset-normalizer==3.1.0
+click==8.1.3
 comm==0.1.3
+community==1.0.0b1
 contourpy==1.0.7
 cycler==0.11.0
 debugpy==1.6.7
@@ -24,6 +27,7 @@ defusedxml==0.7.1
 exceptiongroup==1.1.1
 executing==1.2.0
 fastjsonschema==2.17.1
+Flask==2.3.2
 fonttools==4.39.4
 fqdn==1.5.1
 idna==3.4
@@ -35,6 +39,7 @@ ipython==8.12.2
 ipython-genutils==0.2.0
 ipywidgets==8.0.6
 isoduration==20.11.0
+itsdangerous==2.1.2
 jedi==0.18.2
 Jinja2==3.1.2
 json5==0.9.14
@@ -122,5 +127,6 @@ wcwidth==0.2.6
 webcolors==1.13
 webencodings==0.5.1
 websocket-client==1.5.3
+Werkzeug==2.3.6
 widgetsnbextension==4.0.7
 zipp==3.15.0
