@@ -6,7 +6,7 @@ authors = ["KaiErikNiermann <kai.niermann@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = ">=3.9,<3.13"
 anyio = "3.7.0"
 argon2-cffi = "21.3.0"
 argon2-cffi-bindings = "21.2.0"
@@ -137,7 +137,7 @@ websocket-client = "1.5.3"
 werkzeug = "2.3.6"
 widgetsnbextension = "4.0.7"
 zipp = "3.15.0"
-python-louvain = "^0.16"
+scipy = "^1.11.3"
 
 
 [build-system]
